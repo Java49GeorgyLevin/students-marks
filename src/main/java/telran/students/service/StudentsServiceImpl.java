@@ -120,7 +120,8 @@ final StudentRepo studentRepo;
 		// TODO 
 		//getting students who have at least one score of a given subject and all scores of that subject
 		//greater than or equal a given threshold
-		return null;
+		List<IdNamePhone> students = studentRepo.findByAllGoodMarksSubject(subject, thresholdScore);
+		return getStudents(students);
 	}
 
 	@Override

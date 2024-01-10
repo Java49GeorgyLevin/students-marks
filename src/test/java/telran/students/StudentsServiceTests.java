@@ -108,8 +108,17 @@ StudentRepo studentRepo;
 	}
 	@Test
 	void getGoodStudentsSubjectTest() {
-		//TODO
+		List<Student> expected =  new ArrayList<>();
+		expected.add(dbCreation.getStudent(6));
+		List<Student> actual = studentsService.getStudentsAllGoodMarksSubject(DbTestCreation.SUBJECT_1, 85);
+		assertEquals(expected, actual);
+		assertIterableEquals(expected, actual);
 		
+		actual = studentsService.getStudentsAllGoodMarksSubject(DbTestCreation.SUBJECT_1, 75);		
+		expected.add(0, dbCreation.getStudent(3));
+		expected.add(0, dbCreation.getStudent(1));
+		assertEquals(expected, actual);
+		assertIterableEquals(expected, actual);
 	}
 	@Test
 	void getStudentsMarksAmountBetween() {
