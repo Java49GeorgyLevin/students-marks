@@ -124,8 +124,6 @@ StudentRepo studentRepo;
 	void getStudentsMarksAmountBetween() {
 		List<Student> expected = List.of(dbCreation.students[0], dbCreation.students[2], dbCreation.students[3], dbCreation.students[4]);
 		List<Student> actual = studentsService.getStudentsMarksAmountBetween(2, 3);
-		expected.forEach(e -> System.out.printf("expected %d\n", e.id()));
-		actual.forEach(a -> System.out.printf("actual %d\n", a.id()));
 		assertIterableEquals(expected, actual);
 	}
 	@Test
