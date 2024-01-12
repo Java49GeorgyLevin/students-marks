@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.repository.Query;
 
 import telran.students.dto.IdName;
 import telran.students.dto.IdNamePhone;
+import telran.students.dto.MarksOnly;
 import telran.students.model.StudentDoc;
 
 public interface StudentRepo extends MongoRepository<StudentDoc, Long> {
@@ -32,5 +33,7 @@ public interface StudentRepo extends MongoRepository<StudentDoc, Long> {
 				$not: {$elemMatch:{subject:?0, score:{$lt:?1}}}	}		
 			}""")	
 	List<IdNamePhone> findByAllGoodMarksSubject(String subject, int thresholdScore);
+	
+	MarksOnly findByIdAndMarksSubject(long id, String subject);
 
 }

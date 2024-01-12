@@ -1,5 +1,6 @@
 package telran.students.service;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import telran.exceptions.NotFoundException;
 import telran.students.dto.IdName;
 import telran.students.dto.IdNamePhone;
 import telran.students.dto.Mark;
+import telran.students.dto.MarksOnly;
 import telran.students.dto.Student;
 import telran.students.model.StudentDoc;
 import telran.students.repo.StudentRepo;
@@ -117,7 +119,6 @@ final StudentRepo studentRepo;
 
 	@Override
 	public List<Student> getStudentsAllGoodMarksSubject(String subject, int thresholdScore) {
-		// TODO 
 		//getting students who have at least one score of a given subject and all scores of that subject
 		//greater than or equal a given threshold
 		List<IdNamePhone> students = studentRepo.findByAllGoodMarksSubject(subject, thresholdScore);
@@ -130,6 +131,22 @@ final StudentRepo studentRepo;
 		//getting students having number of marks in a closed range of the given values
 		//nMarks >= min && nMarks <= max
 		return null;
+	}
+
+	@Override
+	public List<Mark> getStudentSubjectMarks(long id, String subject) {
+		if(!studentRepo.existsById(id)) {
+			throw new NotFoundException(String.format("student %d not exists", id));			
+		}
+		List<Mark> marks = Collections.emptyList();		
+		MarksOnly marksOnly = studentRepo.findByIdAndMarksSubject(id, subject);
+		if(marksOnly != null) {
+			marks = marksOnly.getMarks();
+			log.debug("marks are: {}", marks);			
+		} else {
+			log.debug("marks by subject {}  arent't exist", subject);
+		}
+		return marks.stream().filter(m -> m.subject().equals(subject)).toList();
 	}
 
 }

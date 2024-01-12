@@ -124,6 +124,13 @@ StudentRepo studentRepo;
 	void getStudentsMarksAmountBetween() {
 		//TODO
 	}
-	
+	@Test
+	void getStudentSubjectMarksTest() {
+		List<Mark> expection = List.of(dbCreation.marks[0][0], dbCreation.marks[0][1]);		
+		List<Mark> actual = studentsService.getStudentSubjectMarks(1, DbTestCreation.SUBJECT_1);
+		assertIterableEquals(expection, actual);
+		assertThrowsExactly(NotFoundException.class, () -> studentsService.getStudentSubjectMarks(1000, DbTestCreation.SUBJECT_1));		
+		assertTrue(studentsService.getStudentSubjectMarks(2, DbTestCreation.SUBJECT_2).isEmpty());
+	}
 
 }
