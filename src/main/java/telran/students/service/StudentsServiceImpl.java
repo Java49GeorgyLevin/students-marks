@@ -127,10 +127,12 @@ final StudentRepo studentRepo;
 
 	@Override
 	public List<Student> getStudentsMarksAmountBetween(int min, int max) {
-		// TODO 
 		//getting students having number of marks in a closed range of the given values
 		//nMarks >= min && nMarks <= max
-		return null;
+		log.debug("recived values min: {}, max: {}", min, max);
+		List<Student> students = studentRepo.findStudentsMarksAmountBetween(min, max);
+		log.trace("students: {}", students);
+		return students;
 	}
 
 	@Override
