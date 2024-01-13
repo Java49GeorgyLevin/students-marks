@@ -14,6 +14,7 @@ import org.springframework.data.mongodb.MongoTransactionManager;
 
 import telran.exceptions.NotFoundException;
 import telran.students.dto.Mark;
+import telran.students.dto.NameAvgScore;
 import telran.students.dto.Student;
 import telran.students.repo.StudentRepo;
 import telran.students.service.StudentsService;
@@ -127,12 +128,39 @@ StudentRepo studentRepo;
 		assertIterableEquals(expected, actual);
 	}
 	@Test
+	void getStudentSubjectMarksOnClientFilterTest() {
+		List<Mark> expection = List.of(dbCreation.marks[0][0], dbCreation.marks[0][1]);		
+		List<Mark> actual = studentsService.getStudentSubjectMarksOnClientFilter(1, DbTestCreation.SUBJECT_1);
+		assertIterableEquals(expection, actual);
+		assertThrowsExactly(NotFoundException.class, () -> studentsService.getStudentSubjectMarksOnClientFilter(1000, DbTestCreation.SUBJECT_1));		
+		assertTrue(studentsService.getStudentSubjectMarks(2, DbTestCreation.SUBJECT_2).isEmpty());
+	}
+	@Test
 	void getStudentSubjectMarksTest() {
 		List<Mark> expection = List.of(dbCreation.marks[0][0], dbCreation.marks[0][1]);		
 		List<Mark> actual = studentsService.getStudentSubjectMarks(1, DbTestCreation.SUBJECT_1);
 		assertIterableEquals(expection, actual);
 		assertThrowsExactly(NotFoundException.class, () -> studentsService.getStudentSubjectMarks(1000, DbTestCreation.SUBJECT_1));		
 		assertTrue(studentsService.getStudentSubjectMarks(2, DbTestCreation.SUBJECT_2).isEmpty());
+	}
+	@Test
+	void getStudentAvgScoreGreater() {
+		List<NameAvgScore> expected = List.of(new NameAvgScore(DbTestCreation.NAME_6, 100),
+				new NameAvgScore(DbTestCreation.NAME_4, 93));
+		List<NameAvgScore> actual = studentsService.getStudentAvgScoreGreater(90);
+		assertIterableEquals(expected, actual);
+	}
+	@Test
+	void getStudentMarksAtDatesTest() {
+		//TODO
+	}
+	@Test
+	void getBestStudentsTest() {
+		//TODO
+	}
+	@Test
+	void getWorstStudentsTest() {
+		//TODO
 	}
 
 }
