@@ -152,7 +152,9 @@ StudentRepo studentRepo;
 	}
 	@Test
 	void getStudentMarksAtDatesTest() {
-		//TODO
+		List<Mark> expected = List.of(dbCreation.marks[5][0], dbCreation.marks[5][1]);
+		List<Mark> actual = studentsService.getStudentMarksAtDates(DbTestCreation.ID_6, DbTestCreation.DATE_1, DbTestCreation.DATE_2);
+		assertIterableEquals(expected, actual);
 	}
 	@Test
 	void getBestStudentsTest() {

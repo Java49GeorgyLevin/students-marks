@@ -201,13 +201,34 @@ final MongoTemplate mongoTemplate;
 		log.debug("result: {}", res);
 		return res;
 	}
+	
+	private void checkStudent(long id) {
+		if(!studentRepo.existsById(id)) {
+			throw new NotFoundException(String.format("student with id %d not found", id));
+		}
+	}
 
 	@Override
 	public List<Mark> getStudentMarksAtDates(long id, LocalDate from, LocalDate to) {
-		// TODO 
+		checkStudent(id);
 		//returns list of Mark objects of the required student at the given dates
 		//Filtering and projection should be done at DB server
-		return null;
+		MatchOperation matchStudent = Aggregation.match(Criteria.where("id").is(id));
+		UnwindOperation unwindMarks = Aggregation.unwind("marks");
+		Criteria criteria = new Criteria();
+		criteria.andOperator(Criteria.where("marks.date").gte(from), Criteria.where("marks.date").lte(to) );
+		MatchOperation matchDates = Aggregation.match(criteria);
+		ProjectionOperation projectionOperation = Aggregation.project("marks.score", "marks.date", "marks.subject");
+		Aggregation pipeLine = Aggregation.newAggregation(matchStudent, unwindMarks, matchDates, projectionOperation);
+		var aggregationResult = mongoTemplate.aggregate(pipeLine, StudentDoc.class, Document.class);
+		List<Document> listDocument = aggregationResult.getMappedResults();
+		log.debug("list of documents: {}", listDocument);
+		List<Mark> result = listDocument.stream().map(d -> new Mark(d.getString("subject"), 
+				d.getDate("date").toInstant().atZone(ZoneId.systemDefault()).toLocalDate(), 
+				d.getInteger("score"))).toList();
+		log.debug("list of marks: {}", result);
+		return result;
+
 	}
 
 	@Override
