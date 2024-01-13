@@ -30,6 +30,6 @@ List<Mark> getStudentSubjectMarks(long id, String subject);
 List<NameAvgScore> getStudentAvgScoreGreater(int avgScoreThreshold);
 //HW #75
 List<Mark> getStudentMarksAtDates(long id, LocalDate from, LocalDate to);
-List<String> getBestStudents(int nStudents);
-List<String> getWorstStudents(int nStudents);
+List<Student> getBestStudents(int nStudents);
+List<Student> getWorstStudents(int nStudents);
 }

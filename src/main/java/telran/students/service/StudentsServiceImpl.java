@@ -10,6 +10,7 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.GroupOperation;
+import org.springframework.data.mongodb.core.aggregation.LimitOperation;
 import org.springframework.data.mongodb.core.aggregation.MatchOperation;
 import org.springframework.data.mongodb.core.aggregation.ProjectionOperation;
 import org.springframework.data.mongodb.core.aggregation.SortOperation;
@@ -35,6 +36,7 @@ import telran.students.repo.StudentRepo;
 public class StudentsServiceImpl implements StudentsService {
 final StudentRepo studentRepo;
 final MongoTemplate mongoTemplate;
+final int levelGoodScore = 80;
 	@Override
 	@Transactional
 	public Student addStudent(Student student) {
@@ -221,9 +223,9 @@ final MongoTemplate mongoTemplate;
 		ProjectionOperation projectionOperation = Aggregation.project("marks.score", "marks.date", "marks.subject");
 		Aggregation pipeLine = Aggregation.newAggregation(matchStudent, unwindMarks, matchDates, projectionOperation);
 		var aggregationResult = mongoTemplate.aggregate(pipeLine, StudentDoc.class, Document.class);
-		List<Document> listDocument = aggregationResult.getMappedResults();
-		log.debug("list of documents: {}", listDocument);
-		List<Mark> result = listDocument.stream().map(d -> new Mark(d.getString("subject"), 
+		List<Document> listDocuments = aggregationResult.getMappedResults();
+		log.debug("list of documents: {}", listDocuments);
+		List<Mark> result = listDocuments.stream().map(d -> new Mark(d.getString("subject"), 
 				d.getDate("date").toInstant().atZone(ZoneId.systemDefault()).toLocalDate(), 
 				d.getInteger("score"))).toList();
 		log.debug("list of marks: {}", result);
@@ -232,15 +234,27 @@ final MongoTemplate mongoTemplate;
 	}
 
 	@Override
-	public List<String> getBestStudents(int nStudents) {
-		// TODO 
+	public List<Student> getBestStudents(int nStudents) {
 		//returns list of a given number of the best students
 		//Best students are the ones who have most scores greater than 80
-		return null;
+		Criteria criteria = Criteria.where("marks.score").gt(levelGoodScore);
+		UnwindOperation unwindMarks = Aggregation.unwind("marks");
+		MatchOperation matchMarks = Aggregation.match(criteria);
+		GroupOperation groupOperation = Aggregation.group("id", "name", "phone").count().as("markCount");
+		SortOperation sortOperation = Aggregation.sort(Direction.DESC, "markCount");
+		LimitOperation limitOperation = Aggregation.limit(nStudents);
+		ProjectionOperation projectionOperation = Aggregation.project("id", "name", "phone");
+		Aggregation pipeLine = Aggregation.newAggregation(unwindMarks, matchMarks, groupOperation, sortOperation, limitOperation, projectionOperation);
+		var aggregationResult = mongoTemplate.aggregate(pipeLine, StudentDoc.class, Document.class);
+		List<Document> listDocuments = aggregationResult.getMappedResults();
+		log.debug("list of documents: {}", listDocuments);
+		List<Student> result = listDocuments.stream().map(d -> new Student(d.getLong("id"), d.getString("name"), d.getString("phone")) ).toList();		
+		log.debug("list of students: {}", result);
+		return result;
 	}
 
 	@Override
-	public List<String> getWorstStudents(int nStudents) {
+	public List<Student> getWorstStudents(int nStudents) {
 		// TODO 
 		//returns list of a given number of the worst students
 		//Worst students are the ones who have least sum's of all scores
