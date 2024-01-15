@@ -15,5 +15,7 @@ public interface StudentAggregateRepo {
 	List<Mark> aggregateStudentMarksAtDates(long id, LocalDate from, LocalDate to);
 	
 	List<Student> aggregateBestStudents(int nStudents);
+	
+	List<String> aggregateWorstStudents(int nStudents);
 
 }

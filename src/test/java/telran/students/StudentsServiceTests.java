@@ -165,7 +165,9 @@ StudentRepo studentRepo;
 	}
 	@Test
 	void getWorstStudentsTest() {
-		//TODO
+		List<String> expected = List.of(DbTestCreation.NAME_7, DbTestCreation.NAME_2);
+		List<String> actual = studentsService.getWorstStudents(2);
+		assertIterableEquals(expected, actual);
 	}
 
 }

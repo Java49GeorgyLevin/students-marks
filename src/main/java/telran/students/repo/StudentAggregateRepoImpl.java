@@ -7,7 +7,9 @@ import java.util.List;
 import org.bson.Document;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.AccumulatorOperators;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationExpression;
 import org.springframework.data.mongodb.core.aggregation.GroupOperation;
 import org.springframework.data.mongodb.core.aggregation.LimitOperation;
 import org.springframework.data.mongodb.core.aggregation.MatchOperation;
@@ -28,6 +30,7 @@ import telran.students.model.StudentDoc;
 public class StudentAggregateRepoImpl implements StudentAggregateRepo {
 	final MongoTemplate mongoTemplate;
 	final int levelGoodScore = 80;
+	private static final String SUM_SCORES_FIELD = "sum_scores";
 	
 	@Override
 	public List<Mark> aggregateStudentSubjectMarks(long id, String subject) {
@@ -93,7 +96,21 @@ public class StudentAggregateRepoImpl implements StudentAggregateRepo {
 				.map(d -> new Student(d.getLong("id"), d.getString("name"), d.getString("phone")) ).toList();		
 		return result;
 	}
-
-
+	
+	@Override
+	public List<String> aggregateWorstStudents(int nStudents) {
+		AggregationExpression expression = AccumulatorOperators.Sum.sumOf("marks.score");
+		ProjectionOperation projectionOperation = Aggregation.project("name").and(expression)
+				.as(SUM_SCORES_FIELD);
+		SortOperation sortOperation = Aggregation.sort(Direction.ASC, SUM_SCORES_FIELD);
+		LimitOperation limitOperation = Aggregation.limit(nStudents);
+		ProjectionOperation projectionOperationOnlyName = Aggregation.project("name");
+		Aggregation pipeLine = Aggregation.newAggregation
+				( projectionOperation,sortOperation, limitOperation, projectionOperationOnlyName);
+		List<String> res = mongoTemplate.aggregate(pipeLine, StudentDoc.class, Document.class)
+				.getMappedResults().stream().map(d -> d.getString("name")).toList();
+		log.debug("{} worst students are {}", nStudents, res);
+		return res;
+	}
 
 }
