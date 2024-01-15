@@ -15,8 +15,6 @@ import org.springframework.data.mongodb.core.aggregation.ProjectionOperation;
 import org.springframework.data.mongodb.core.aggregation.SortOperation;
 import org.springframework.data.mongodb.core.aggregation.UnwindOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.stereotype.Service;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import telran.students.dto.Mark;
@@ -24,7 +22,6 @@ import telran.students.dto.NameAvgScore;
 import telran.students.dto.Student;
 import telran.students.model.StudentDoc;
 
-@Service
 @Slf4j
 @RequiredArgsConstructor
 
@@ -66,8 +63,7 @@ public class StudentAggregateRepoImpl implements StudentAggregateRepo {
 	public List<Mark> aggregateStudentMarksAtDates(long id, LocalDate from, LocalDate to) {
 		MatchOperation matchStudent = Aggregation.match(Criteria.where("id").is(id));
 		UnwindOperation unwindMarks = Aggregation.unwind("marks");
-		Criteria criteria = new Criteria();
-		criteria.andOperator(Criteria.where("marks.date").gte(from), Criteria.where("marks.date").lte(to) );
+		Criteria criteria = Criteria.where("marks.date").gte(from).lte(to);		
 		MatchOperation matchDates = Aggregation.match(criteria);
 		ProjectionOperation projectionOperation = Aggregation.project("marks.score", "marks.date", "marks.subject");
 		Aggregation pipeLine = Aggregation.newAggregation(matchStudent, unwindMarks, matchDates, projectionOperation);
