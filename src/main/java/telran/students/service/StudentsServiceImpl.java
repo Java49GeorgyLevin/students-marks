@@ -35,8 +35,7 @@ import telran.students.repo.StudentRepo;
 @RequiredArgsConstructor
 public class StudentsServiceImpl implements StudentsService {
 final StudentRepo studentRepo;
-final MongoTemplate mongoTemplate;
-final int levelGoodScore = 80;
+
 	@Override
 	@Transactional
 	public Student addStudent(Student student) {
@@ -169,37 +168,15 @@ final int levelGoodScore = 80;
 		
 	@Override
 	public List<Mark> getStudentSubjectMarks(long id, String subject) {
-		if (!studentRepo.existsById(id)) {
-			throw new NotFoundException(String.format("student with id %d not found", id));
-		}
-		MatchOperation matchStudent = Aggregation.match(Criteria.where("id").is(id));
-		UnwindOperation unwindOperation = Aggregation.unwind("marks");
-		MatchOperation matchMarksSubject = Aggregation.match(Criteria.where("marks.subject").is(subject));
-		ProjectionOperation projectionOperation = Aggregation.project("marks.score", "marks.date");
-		Aggregation pipeLine = Aggregation.newAggregation(matchStudent, unwindOperation,
-				matchMarksSubject, projectionOperation);
-		var aggregationResult = mongoTemplate.aggregate(pipeLine, StudentDoc.class, Document.class);
-		List<Document> listDocuments = aggregationResult.getMappedResults();
-		log.debug("listDocuments: {}", listDocuments);
-		List<Mark> result = listDocuments.stream()
-				.map(d -> new Mark(subject, d.getDate("date").toInstant()
-						.atZone(ZoneId.systemDefault()).toLocalDate(), d.getInteger("score"))).toList();
-				;
+		checkStudent(id);
+		List<Mark> result = studentRepo.aggregateStudentSubjectMarks(id, subject);
 		log.debug("result: {}", result);
 		return result;		
 	}
 
 	@Override
-	public List<NameAvgScore> getStudentAvgScoreGreater(int avgScoreThreshold) {
-		UnwindOperation unwindOperation = Aggregation.unwind("marks");
-		GroupOperation groupOperation = Aggregation.group("name").avg("marks.score").as("avgMark");
-		MatchOperation matchOperation = Aggregation.match(Criteria.where("avgMark").gt(avgScoreThreshold));
-		SortOperation sortOperation = Aggregation.sort(Direction.DESC, "avgMark");
-		Aggregation pipeLine = Aggregation.newAggregation(unwindOperation, groupOperation, matchOperation, sortOperation);
-		
-		List<NameAvgScore> res = mongoTemplate.aggregate(pipeLine, StudentDoc.class, Document.class)
-				.getMappedResults().stream().map(d -> new NameAvgScore(d.getString("_id"),
-						d.getDouble("avgMark").intValue())).toList();
+	public List<NameAvgScore> getStudentAvgScoreGreater(int avgScoreThreshold) {		
+		List<NameAvgScore> res = studentRepo.aggregateStudentAvgScoreGreater(avgScoreThreshold);
 		log.debug("result: {}", res);
 		return res;
 	}
@@ -215,40 +192,16 @@ final int levelGoodScore = 80;
 		checkStudent(id);
 		//returns list of Mark objects of the required student at the given dates
 		//Filtering and projection should be done at DB server
-		MatchOperation matchStudent = Aggregation.match(Criteria.where("id").is(id));
-		UnwindOperation unwindMarks = Aggregation.unwind("marks");
-		Criteria criteria = new Criteria();
-		criteria.andOperator(Criteria.where("marks.date").gte(from), Criteria.where("marks.date").lte(to) );
-		MatchOperation matchDates = Aggregation.match(criteria);
-		ProjectionOperation projectionOperation = Aggregation.project("marks.score", "marks.date", "marks.subject");
-		Aggregation pipeLine = Aggregation.newAggregation(matchStudent, unwindMarks, matchDates, projectionOperation);
-		var aggregationResult = mongoTemplate.aggregate(pipeLine, StudentDoc.class, Document.class);
-		List<Document> listDocuments = aggregationResult.getMappedResults();
-		log.debug("list of documents: {}", listDocuments);
-		List<Mark> result = listDocuments.stream().map(d -> new Mark(d.getString("subject"), 
-				d.getDate("date").toInstant().atZone(ZoneId.systemDefault()).toLocalDate(), 
-				d.getInteger("score"))).toList();
+		List<Mark> result = studentRepo.aggregateStudentMarksAtDates(id, from, to);
 		log.debug("list of marks: {}", result);
 		return result;
-
 	}
 
 	@Override
 	public List<Student> getBestStudents(int nStudents) {
 		//returns list of a given number of the best students
 		//Best students are the ones who have most scores greater than 80
-		Criteria criteria = Criteria.where("marks.score").gt(levelGoodScore);
-		UnwindOperation unwindMarks = Aggregation.unwind("marks");
-		MatchOperation matchMarks = Aggregation.match(criteria);
-		GroupOperation groupOperation = Aggregation.group("id", "name", "phone").count().as("markCount");
-		SortOperation sortOperation = Aggregation.sort(Direction.DESC, "markCount");
-		LimitOperation limitOperation = Aggregation.limit(nStudents);
-		ProjectionOperation projectionOperation = Aggregation.project("id", "name", "phone");
-		Aggregation pipeLine = Aggregation.newAggregation(unwindMarks, matchMarks, groupOperation, sortOperation, limitOperation, projectionOperation);
-		var aggregationResult = mongoTemplate.aggregate(pipeLine, StudentDoc.class, Document.class);
-		List<Document> listDocuments = aggregationResult.getMappedResults();
-		log.debug("list of documents: {}", listDocuments);
-		List<Student> result = listDocuments.stream().map(d -> new Student(d.getLong("id"), d.getString("name"), d.getString("phone")) ).toList();		
+		List<Student> result = studentRepo.aggregateBestStudents(nStudents);		
 		log.debug("list of students: {}", result);
 		return result;
 	}

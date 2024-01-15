@@ -11,7 +11,7 @@ import telran.students.dto.MarksOnly;
 import telran.students.dto.Student;
 import telran.students.model.StudentDoc;
 
-public interface StudentRepo extends MongoRepository<StudentDoc, Long> {
+public interface StudentRepo extends MongoRepository<StudentDoc, Long>, StudentAggregateRepo {
 	@Query(value="{id:?0}", fields = "{marks:1, id:0}")
 	StudentDoc findStudentMarks(long id);
 	/***************************************************/
