@@ -105,8 +105,8 @@ public class StudentAggregateRepoImpl implements StudentAggregateRepo {
 		SortOperation sortOperation = Aggregation.sort(Direction.ASC, SUM_SCORES_FIELD);
 		LimitOperation limitOperation = Aggregation.limit(nStudents);
 		ProjectionOperation projectionOperationOnlyName = Aggregation.project("name");
-		Aggregation pipeLine = Aggregation.newAggregation
-				( projectionOperation,sortOperation, limitOperation, projectionOperationOnlyName);
+		Aggregation pipeLine = Aggregation
+				.newAggregation(projectionOperation,sortOperation, limitOperation, projectionOperationOnlyName);
 		List<String> res = mongoTemplate.aggregate(pipeLine, StudentDoc.class, Document.class)
 				.getMappedResults().stream().map(d -> d.getString("name")).toList();
 		log.debug("{} worst students are {}", nStudents, res);

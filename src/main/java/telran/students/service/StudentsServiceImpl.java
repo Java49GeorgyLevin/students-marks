@@ -196,7 +196,6 @@ final StudentRepo studentRepo;
 
 	@Override
 	public List<String> getWorstStudents(int nStudents) {
-		// TODO 
 		//returns list of a given number of the worst students
 		//Worst students are the ones who have least sum's of all scores
 		//Students who have no scores at all should be considered as worst
